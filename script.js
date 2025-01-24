@@ -4,8 +4,15 @@ const ctx = canvas.getContext("2d");
 let ojek = { x: 225, y: 500, width: 50, height: 50, speed: 5 };
 let order = null;
 let balance = 0;
-let traffic = [];
+let fuel = 100;
+let timeLeft = 60;
 let gameRunning = true;
+
+// Tombol kontrol
+document.getElementById("up").addEventListener("click", () => moveOjek("up"));
+document.getElementById("down").addEventListener("click", () => moveOjek("down"));
+document.getElementById("left").addEventListener("click", () => moveOjek("left"));
+document.getElementById("right").addEventListener("click", () => moveOjek("right"));
 
 function drawOjek() {
     ctx.fillStyle = "green";
@@ -23,47 +30,29 @@ function drawOrder() {
     }
 }
 
-function drawTraffic() {
-    ctx.fillStyle = "red";
-    traffic.forEach(car => {
-        ctx.fillRect(car.x, car.y, car.width, car.height);
-    });
-}
-
 function updateGame() {
     if (!gameRunning) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawOjek();
     drawOrder();
-    drawTraffic();
 
-    // Update posisi kendaraan lain
-    traffic.forEach(car => car.y += 2);
-    traffic = traffic.filter(car => car.y < canvas.height);
-
-    // Cek jika ojek sampai ke lokasi jemput
+    // Cek jemput pelanggan
     if (order && !order.pickedUp && checkCollision(ojek, order.pickup)) {
         order.pickedUp = true;
         document.getElementById("status").innerText = "Mengantar pelanggan...";
     }
 
-    // Cek jika ojek sampai ke tujuan
+    // Cek antar pelanggan
     if (order && order.pickedUp && checkCollision(ojek, order.destination)) {
         balance += 10000;
+        fuel = Math.min(fuel + 20, 100);
         document.getElementById("money").innerText = "Saldo: Rp " + balance;
+        document.getElementById("fuel").innerText = "Bensin: " + fuel + "%";
         document.getElementById("status").innerText = "Menunggu pesanan...";
         order = null;
         setTimeout(generateOrder, 2000);
     }
-
-    // Cek tabrakan dengan kendaraan lain
-    traffic.forEach(car => {
-        if (checkCollision(ojek, car)) {
-            alert("Kamu kecelakaan! Game Over.");
-            gameRunning = false;
-        }
-    });
 
     requestAnimationFrame(updateGame);
 }
@@ -77,13 +66,21 @@ function generateOrder() {
     document.getElementById("status").innerText = "Ada pesanan! Pergi ke lokasi jemput.";
 }
 
-function generateTraffic() {
-    traffic.push({
-        x: Math.random() * (canvas.width - 50),
-        y: 0,
-        width: 50,
-        height: 50
-    });
+function moveOjek(direction) {
+    if (!gameRunning || fuel <= 0) return;
+
+    if (direction === "left" && ojek.x > 0) ojek.x -= ojek.speed;
+    if (direction === "right" && ojek.x < canvas.width - ojek.width) ojek.x += ojek.speed;
+    if (direction === "up" && ojek.y > 0) ojek.y -= ojek.speed;
+    if (direction === "down" && ojek.y < canvas.height - ojek.height) ojek.y += ojek.speed;
+
+    fuel -= 0.5;
+    document.getElementById("fuel").innerText = "Bensin: " + Math.max(0, fuel) + "%";
+
+    if (fuel <= 0) {
+        document.getElementById("status").innerText = "Bensin habis! Game Over.";
+        gameRunning = false;
+    }
 }
 
 function checkCollision(obj1, obj2) {
@@ -93,13 +90,16 @@ function checkCollision(obj1, obj2) {
            obj1.y + obj1.height > obj2.y;
 }
 
-document.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowLeft" && ojek.x > 0) ojek.x -= ojek.speed;
-    if (e.key === "ArrowRight" && ojek.x < canvas.width - ojek.width) ojek.x += ojek.speed;
-    if (e.key === "ArrowUp" && ojek.y > 0) ojek.y -= ojek.speed;
-    if (e.key === "ArrowDown" && ojek.y < canvas.height - ojek.height) ojek.y += ojek.speed;
-});
+function countdown() {
+    if (timeLeft > 0) {
+        timeLeft--;
+        document.getElementById("time").innerText = "Waktu: " + timeLeft + "s";
+    } else {
+        document.getElementById("status").innerText = "Waktu habis! Game Over.";
+        gameRunning = false;
+    }
+}
 
-setInterval(generateTraffic, 3000);
+setInterval(countdown, 1000);
 setTimeout(generateOrder, 2000);
 updateGame();
