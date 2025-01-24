@@ -1,4 +1,6 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { text-align: center; font-family: Arial, sans-serif; }
 canvas { background: #ddd; display: block; margin: 20px auto; border: 2px solid black; }
-#status, #money { font-size: 18px; margin-top: 10px; }
+#status, #money, #fuel, #time { font-size: 18px; margin-top: 5px; }
+#controls { margin-top: 20px; }
+button { font-size: 20px; padding: 10px; margin: 5px; }
